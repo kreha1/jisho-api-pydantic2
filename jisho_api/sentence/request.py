@@ -74,7 +74,7 @@ class Sentence:
 
         if cache and (Sentence.ROOT / (word + ".json")).exists():
             toggle = True
-            with open(Sentence.ROOT / (word + ".json"), "r") as fp:
+            with open(Sentence.ROOT / (word + ".json"), "r", encoding="utf-8") as fp:
                 r = json.load(fp)
             r = SentenceRequest(**r)
         else:
@@ -99,5 +99,5 @@ class Sentence:
     @staticmethod
     def save(word, r):
         Sentence.ROOT.mkdir(exist_ok=True)
-        with open(Sentence.ROOT / f"{word}.json", "w") as fp:
+        with open(Sentence.ROOT / f"{word}.json", "w", encoding="utf-8") as fp:
             json.dump(r.dict(), fp, indent=4, ensure_ascii=False)

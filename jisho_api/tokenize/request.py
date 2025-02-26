@@ -72,7 +72,7 @@ class Tokens:
 
         if cache and (Tokens.ROOT / (word + ".json")).exists():
             toggle = True
-            with open(Tokens.ROOT / (word + ".json"), "r") as fp:
+            with open(Tokens.ROOT / (word + ".json"), "r", encoding="utf-8") as fp:
                 r = json.load(fp)
             r = TokenRequest(**r)
         else:
@@ -97,5 +97,5 @@ class Tokens:
     @staticmethod
     def save(word, r):
         Tokens.ROOT.mkdir(exist_ok=True)
-        with open(Tokens.ROOT / f"{word}.json", "w") as fp:
+        with open(Tokens.ROOT / f"{word}.json", "w", encoding="utf-8") as fp:
             json.dump(r.dict(), fp, indent=4, ensure_ascii=False)

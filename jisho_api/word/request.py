@@ -67,7 +67,7 @@ class Word:
 
         if cache and (Word.ROOT / (word + ".json")).exists():
             toggle = True
-            with open(Word.ROOT / (word + ".json"), "r") as fp:
+            with open(Word.ROOT / (word + ".json"), "r", encoding="utf-8") as fp:
                 r = json.load(fp)
         else:
             r = requests.get(url, headers=headers).json()
@@ -83,5 +83,5 @@ class Word:
     @staticmethod
     def save(word, r):
         Word.ROOT.mkdir(exist_ok=True)
-        with open(Word.ROOT / f"{word}.json", "w") as fp:
+        with open(Word.ROOT / f"{word}.json", "w", encoding="utf-8") as fp:
             fp.write(json.dumps(r.dict(), indent=4, ensure_ascii=False))
