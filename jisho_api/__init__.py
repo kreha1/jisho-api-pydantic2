@@ -1,5 +1,6 @@
 def scrape(cls, words, root_dump):
     from pathlib import Path
+
     cls.ROOT = Path(root_dump)
     nwords = {}
     for i, w in enumerate(words):

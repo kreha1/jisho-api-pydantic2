@@ -50,7 +50,7 @@ class WordRequest(BaseModel):
             console.print(base)
 
             for i, s in enumerate(wdef):
-                base = f"[yellow]{i+1}. [white]{', '.join(s.english_definitions)}"
+                base = f"[yellow]{i + 1}. [white]{', '.join(s.english_definitions)}"
                 base += "".join([f", ([magenta]{t}[white])" for t in s.tags])
                 console.print(base)
             console.print(Markdown("---"))

@@ -32,6 +32,7 @@ jisho = "jisho_api.cli:make_cli"
 [dependency-groups]
 dev = [
     "pytest>=6.1.2,<7",
+    "ruff>=0.11.0",
     "tatoebatools>=0.2.0,<0.3",
 ]
 

@@ -12,7 +12,6 @@ from jisho_api.tokenize.cfg import TokenConfig
 from jisho_api.util import CLITagger
 
 
-
 class RequestMeta(BaseModel):
     status: int
 
@@ -28,10 +27,10 @@ class TokenRequest(BaseModel):
         yield from self.data
 
     def rich_print(self):
-        base = ''
-        toks = ''
+        base = ""
+        toks = ""
         for i, d in enumerate(self):
-            base += CLITagger.underline(d.token) + ' '
+            base += CLITagger.underline(d.token) + " "
             toks += f"{i}. {d.token} [violet][{str(d.pos_tag.value)}][/violet]\n"
         console.print(base)
         console.print(toks)
@@ -50,18 +49,15 @@ class Tokens:
             toks = r.find_all("li")
             for t in toks:
                 try:
-                    pos_tag = t['data-pos']
+                    pos_tag = t["data-pos"]
                 except:
                     pos_tag = "Unknown"
-                jp = t.find_all('span', {"class": "japanese_word__text_wrapper"})
+                jp = t.find_all("span", {"class": "japanese_word__text_wrapper"})
                 try:
-                    jp = jp[0].find_all('a')[0]['data-word']
+                    jp = jp[0].find_all("a")[0]["data-word"]
                 except Exception as e:
                     jp = jp[0].text.strip()
-                tks.append(TokenConfig(
-                    token=jp,
-                    pos_tag=pos_tag
-                ))
+                tks.append(TokenConfig(token=jp, pos_tag=pos_tag))
 
         return tks
 

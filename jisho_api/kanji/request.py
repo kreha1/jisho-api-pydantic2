@@ -210,23 +210,21 @@ class Kanji:
 
     @staticmethod
     def meta_education(soup):
-        res = soup.find_all("div", {"class": "kanji_stats"})[0]  # .find_all("strong")[0]
+        res = soup.find_all("div", {"class": "kanji_stats"})[
+            0
+        ]  # .find_all("strong")[0]
 
         try:
             grade = (
                 res.find_all("div", {"class": "grade"})[0]
                 .find_all("strong")[0]
-                .text # the grade is sometimes "junior high". shouldn't use .split(" ")[-1]
+                .text  # the grade is sometimes "junior high". shouldn't use .split(" ")[-1]
             )
         except:
             grade = None
 
         try:
-            jlpt = (
-                res.find_all("div", {"class": "jlpt"})[0]
-                .find_all("strong")[0]
-                .text
-            )
+            jlpt = res.find_all("div", {"class": "jlpt"})[0].find_all("strong")[0].text
         except:
             jlpt = None
 
