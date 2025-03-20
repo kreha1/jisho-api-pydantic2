@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
-import urllib
+import urllib.parse
 from pathlib import Path
-from typing import List
+from typing import Any, Iterator
 
 import requests
 from pydantic import BaseModel
@@ -18,12 +20,12 @@ class RequestMeta(BaseModel):
 
 class TokenRequest(BaseModel):
     meta: RequestMeta
-    data: List[TokenConfig]
+    data: list[TokenConfig]
 
     def __len__(self):
         return len(self.data)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[TokenConfig]:
         yield from self.data
 
     def rich_print(self):
@@ -41,7 +43,7 @@ class Tokens:
     ROOT = Path.home() / ".jisho/data/tokens/"
 
     @staticmethod
-    def tokens(soup):
+    def tokens(soup: BeautifulSoup) -> list[TokenConfig]:
         res = soup.find_all("section", {"id": "zen_bar"})
 
         tks = []
@@ -50,12 +52,12 @@ class Tokens:
             for t in toks:
                 try:
                     pos_tag = t["data-pos"]
-                except:
+                except KeyError:
                     pos_tag = "Unknown"
                 jp = t.find_all("span", {"class": "japanese_word__text_wrapper"})
                 try:
                     jp = jp[0].find_all("a")[0]["data-word"]
-                except Exception as e:
+                except (KeyError, IndexError):
                     jp = jp[0].text.strip()
                 tks.append(TokenConfig(token=jp, pos_tag=pos_tag))
 
@@ -76,12 +78,8 @@ class Tokens:
             soup = BeautifulSoup(r, "html.parser")
 
             r = TokenRequest(
-                **{
-                    "meta": {
-                        "status": 200,
-                    },
-                    "data": Tokens.tokens(soup),
-                }
+                meta=RequestMeta(status=200),
+                data=Tokens.tokens(soup),
             )
             if not len(r):
                 console.print(f"[red bold][Error] [white] No matches found for {word}.")
@@ -91,7 +89,11 @@ class Tokens:
         return r
 
     @staticmethod
-    def save(word, r):
+    def save(word: str, r: TokenRequest | dict[str, Any]) -> None:
         Tokens.ROOT.mkdir(exist_ok=True)
-        with open(Tokens.ROOT / f"{word}.json", "w", encoding="utf-8") as fp:
-            json.dump(r.dict(), fp, indent=4, ensure_ascii=False)
+        try:
+            payload = r if isinstance(r, dict) else r.model_dump(exclude_unset=True, by_alias=True)
+            with open(Tokens.ROOT / f"{word}.json", "w", encoding="utf-8") as fp:
+                json.dump(payload, fp, indent=4, ensure_ascii=False)
+        except Exception as e:
+            console.print(f"[red bold][Error] [white] Failed to save {word}: {str(e)}")

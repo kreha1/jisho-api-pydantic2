@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import json
 import re
-import urllib
+from typing import Any
+import urllib.parse
 from pathlib import Path
 
 import requests
@@ -27,11 +30,11 @@ class KanjiRequest(BaseModel):
         base = f"[green]{self.data.kanji} "
         base += CLITagger.colorize(
             "Kun",
-            ", ".join(self.data.main_readings.kun),
+            ", ".join(self.data.main_readings.kun) if self.data.main_readings.kun else "",
             "red",
         )
         base += CLITagger.colorize(
-            "On", ", ".join(self.data.main_readings.on), "red", last=True
+            "On", ", ".join(self.data.main_readings.on) if self.data.main_readings.on else "", "red", last=True
         )
         console.print(base)
         # TODO - TRY on this
@@ -58,12 +61,12 @@ class KanjiRequest(BaseModel):
             console.print(
                 CLITagger.colorize(
                     "Alternate Radical",
-                    ", ".join(self.data.radical.alt_forms),
+                    ", ".join(self.data.radical.alt_forms) if self.data.radical.alt_forms else "",
                     "yellow",
                     last=True,
                 )
             )
-        except Exception as e:
+        except Exception:
             pass
         console.print(
             CLITagger.colorize(
@@ -74,12 +77,12 @@ class KanjiRequest(BaseModel):
             console.print(
                 CLITagger.colorize(
                     "Variants",
-                    ", ".join(self.data.radical.variants),
+                    ", ".join(self.data.radical.variants) if self.data.radical.variants else "",
                     "yellow",
                     last=True,
                 )
             )
-        except Exception as e:
+        except Exception:
             pass
 
         console.print()
@@ -103,7 +106,7 @@ class Kanji:
     ROOT = Path.home() / ".jisho/data/kanji/"
 
     @staticmethod
-    def strokes(soup):
+    def strokes(soup: BeautifulSoup) -> str:
         return (
             soup.find_all("div", {"class": "kanji-details__stroke_count"})[0]
             .find("strong")
@@ -111,7 +114,7 @@ class Kanji:
         )
 
     @staticmethod
-    def main_meanings(soup):
+    def main_meanings(soup: BeautifulSoup) -> list[str]:
         return (
             soup.find_all("div", {"class": "kanji-details__main-meanings"})[0]
             .text.strip()
@@ -119,7 +122,7 @@ class Kanji:
         )
 
     @staticmethod
-    def main_readings(soup):
+    def main_readings(soup: BeautifulSoup) -> dict[str, list[str] | None]:
         res = soup.find_all("div", {"class": "kanji-details__main-readings"})
         try:
             kun = (
@@ -129,7 +132,7 @@ class Kanji:
                 .replace("Kun:", "")
                 .split("、 ")
             )
-        except:
+        except Exception:
             kun = None
 
         try:
@@ -140,12 +143,12 @@ class Kanji:
                 .replace("On:", "")
                 .split("、 ")
             )
-        except:
+        except Exception:
             on = None
         return {"kun": kun, "on": on}
 
     @staticmethod
-    def meta(soup):
+    def meta(soup: BeautifulSoup) -> dict[str, Any]:
         return {
             "education": Kanji.meta_education(soup),
             "dictionary_idxs": Kanji.meta_dictionary_idxs(soup),
@@ -155,7 +158,7 @@ class Kanji:
         }
 
     @staticmethod
-    def _scrape_table(table):
+    def _scrape_table(table: BeautifulSoup) -> dict[str, str]:
         refs = table.find_all("td", {"class": "dic_ref"})
         names = table.find_all("td", {"class": "dic_name"})
         refs = [r.text.strip() for r in refs]
@@ -163,33 +166,33 @@ class Kanji:
         return {r: n for r, n in zip(refs, names)}
 
     @staticmethod
-    def meta_dictionary_idxs(soup):
+    def meta_dictionary_idxs(soup: BeautifulSoup) -> dict[str, str]:
         res = soup.find_all("table", {"summary": "Dictionary indices"})
         return Kanji._scrape_table(res[0])
 
     @staticmethod
-    def meta_classifications(soup):
+    def meta_classifications(soup: BeautifulSoup) -> dict[str, str]:
         res = soup.find_all("section", {"id": "classifications"})
         return Kanji._scrape_table(res[0])
 
     @staticmethod
-    def meta_codepoints(soup):
+    def meta_codepoints(soup: BeautifulSoup) -> dict[str, str]:
         res = soup.find_all("section", {"id": "codepoints"})
         return Kanji._scrape_table(res[0])
 
     @staticmethod
-    def meta_readings(soup):
+    def meta_readings(soup: BeautifulSoup) -> dict[str, list[str] | None]:
         res = soup.find_all("div", {"class": "kanji-details__readings row"})
 
         try:
             ja = res[0].find_all("dd", {"lang": "ja"})[0].text.split(", ")
-        except:
+        except Exception:
             ja = None
         try:
             cn = res[0].find_all("dl", {"class": "dictionary_entry pinyin"})[0]
             cn = cn.find_all("dd")[0].text
             cn = cn.split(", ")
-        except:
+        except Exception:
             cn = None
 
         try:
@@ -199,7 +202,7 @@ class Kanji:
                 .find_all("dd")[0]
                 .text.split(", ")
             )
-        except:
+        except Exception:
             kr = None
 
         return {
@@ -209,7 +212,7 @@ class Kanji:
         }
 
     @staticmethod
-    def meta_education(soup):
+    def meta_education(soup: BeautifulSoup) -> dict[str, Any]:
         res = soup.find_all("div", {"class": "kanji_stats"})[
             0
         ]  # .find_all("strong")[0]
@@ -220,12 +223,12 @@ class Kanji:
                 .find_all("strong")[0]
                 .text  # the grade is sometimes "junior high". shouldn't use .split(" ")[-1]
             )
-        except:
+        except Exception:
             grade = None
 
         try:
             jlpt = res.find_all("div", {"class": "jlpt"})[0].find_all("strong")[0].text
-        except:
+        except Exception:
             jlpt = None
 
         try:
@@ -234,20 +237,22 @@ class Kanji:
                 .find_all("strong")[0]
                 .text
             )
-        except:
+        except Exception:
             frequency = None
 
         return {"grade": grade, "jlpt": jlpt, "newspaper_rank": frequency}
 
     @staticmethod
-    def reading_examples(soup):
-        try:
-            threeway = lambda x: (
+    def reading_examples(soup: BeautifulSoup) -> dict[str, list[dict[str, str]] | None]:
+        def threeway(x: str) -> tuple[str, str, str]:
+            return (
                 x[: x.index("【")],
                 x[x.index("【") + 1 : x.index("】")],
                 x[x.index("】") + 1 :],
             )
-            process = lambda x: [
+
+        def process(x: list[tuple[str, str, str]]) -> list[dict[str, str | list[str]]]:
+            return [
                 {
                     "kanji": k.replace("\n", "").strip(),
                     "reading": r.replace("\n", "").strip(),
@@ -256,6 +261,7 @@ class Kanji:
                 for k, r, m in x
             ]
 
+        try:
             res = soup.find_all("ul", {"class": "no-bullet"})
             on = res[0].find_all("li")
             ons = process([threeway(o.text) for o in on])
@@ -263,25 +269,25 @@ class Kanji:
             try:
                 kun = res[1].find_all("li")
                 kuns = process([threeway(k.text) for k in kun])
-            except:
+            except Exception:
                 kuns = None
 
             return {
                 "on": ons,
                 "kun": kuns,
             }
-        except:
+        except Exception:
             return None
 
     @staticmethod
-    def radical(soup):
+    def radical(soup: BeautifulSoup) -> dict[str, Any]:
         try:
             variants = (
                 soup.find_all("dl", {"class": "dictionary_entry variants"})[0]
                 .find("a")
                 .text.split(" ")
             )
-        except:
+        except Exception:
             variants = None
 
         res = soup.find_all("div", {"class": "radicals"})
@@ -318,7 +324,11 @@ class Kanji:
         }
 
     @staticmethod
-    def request(kanji, cache=False, headers=None):
+    def request(
+        kanji: str,
+        cache: bool = False,
+        headers: dict[str, str] | None = None,
+    ) -> KanjiRequest | None:
         url = Kanji.URL + urllib.parse.quote(kanji + " #kanji")
         toggle = False
 
@@ -333,24 +343,26 @@ class Kanji:
             soup = BeautifulSoup(r, "html.parser")
 
             try:
-                r = {
-                    "meta": {
-                        "status": 200,
-                    },
-                    "data": {
-                        "kanji": kanji,
-                        "strokes": Kanji.strokes(soup),
-                        "main_meanings": Kanji.main_meanings(soup),
-                        "main_readings": Kanji.main_readings(soup),
-                        "meta": Kanji.meta(soup),
-                        "radical": Kanji.radical(soup),
-                        "reading_examples": Kanji.reading_examples(soup),
-                    },
-                }
-                r = KanjiRequest(**r)
+                r = KanjiRequest(
+                    meta=RequestMeta(status=200),
+                    data=KanjiConfig(
+                        kanji=kanji,
+                        strokes=Kanji.strokes(soup),
+                        main_meanings=Kanji.main_meanings(soup),
+                        main_readings=Kanji.main_readings(soup),
+                        meta=Kanji.meta(soup),
+                        radical=Kanji.radical(soup),
+                        reading_examples=Kanji.reading_examples(soup),
+                    ),
+                )
+                if not len(r):
+                    console.print(
+                        f"[red bold][Error] [white] No matches found for {kanji}."
+                    )
+                    return None
             except Exception as e:
                 console.print(
-                    f"[red bold ][Error][/red bold] [white]No kanji found with name {kanji}."
+                    f"[red bold ][Error][/red bold] [white]Failed to request {kanji}: {e}"
                 )
                 return None
         if cache and not toggle:
@@ -358,7 +370,12 @@ class Kanji:
         return r
 
     @staticmethod
-    def save(word, r):
+    def save(word: str, r: KanjiRequest | dict[str, Any]) -> None:
         Kanji.ROOT.mkdir(exist_ok=True)
-        with open(Kanji.ROOT / f"{word}.json", "w", encoding="utf-8") as fp:
-            json.dump(r.dict(), fp, indent=4, ensure_ascii=False)
+        try:
+            payload = r if isinstance(r, dict) else r.model_dump(exclude_unset=True, by_alias=True)
+            with open(Kanji.ROOT / f"{word}.json", "w", encoding="utf-8") as fp:
+                json.dump(payload, fp, indent=4, ensure_ascii=False)
+        except Exception as e:
+            console.print(f"[red bold][Error] [white] Failed to save {word}: {str(e)}")
+

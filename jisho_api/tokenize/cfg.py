@@ -1,5 +1,5 @@
+from __future__ import annotations
 from enum import Enum
-
 from pydantic import BaseModel
 
 
@@ -21,7 +21,7 @@ class PosTag(Enum):
     # rather than causing the program to crash, inform the user of the unexpected posTag
     # implementation source: https://stackoverflow.com/questions/44867597/is-there-a-way-to-specify-a-default-value-for-python-enums
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str) -> PosTag:
         print("Unexpected positional Tag: {}".format(value))
         return cls.unk
 

@@ -1,7 +1,7 @@
+from __future__ import annotations
 from enum import Enum
-from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class JLPT(str, Enum):
@@ -13,54 +13,54 @@ class JLPT(str, Enum):
 
 
 class MainReadings(BaseModel):
-    kun: Optional[List[str]]
-    on: Optional[List[str]]
+    kun: list[str] | None = Field(default=None)
+    on: list[str] | None = Field(default=None)
 
 
 class KanjiRadical(BaseModel):
-    alt_forms: Optional[List[str]]
+    alt_forms: list[str] | None = Field(default=None)
     meaning: str
-    parts: List[str]
+    parts: list[str]
     basis: str
-    kangxi_order: Optional[int]
-    variants: Optional[List[str]]
+    kangxi_order: int | None = Field(default=None)
+    variants: list[str] | None = Field(default=None)
 
 
 class KanjiMeta(BaseModel):
     class KanjiMetaEducation(BaseModel):
-        grade: Optional[str]
-        jlpt: Optional[JLPT]
-        newspaper_rank: Optional[int]
+        grade: str | None = Field(default=None)
+        jlpt: JLPT | None = Field(default=None)
+        newspaper_rank: int | None = Field(default=None)
 
     class KanjiMetaReadings(BaseModel):
-        japanese: Optional[List[str]]
-        chinese: Optional[List[str]]
-        korean: Optional[List[str]]
+        japanese: list[str] | None = Field(default=None)
+        chinese: list[str] | None = Field(default=None)
+        korean: list[str] | None = Field(default=None)
 
-    education: Optional[KanjiMetaEducation]
-    dictionary_idxs: Dict[str, str]
-    classifications: Dict[str, str]
-    codepoints: Dict[str, str]
-    readings: KanjiMetaReadings
+    education: KanjiMetaEducation | None = Field(default=None)
+    dictionary_idxs: dict[str, str] | None = Field(default=None)
+    classifications: dict[str, str] | None = Field(default=None)
+    codepoints: dict[str, str] | None = Field(default=None)
+    readings: KanjiMetaReadings | None = Field(default=None)
 
 
 class ReadingExamples(BaseModel):
     class Example(BaseModel):
         kanji: str
         reading: str
-        meanings: List[str]
+        meanings: list[str]
 
-    kun: Optional[List[Example]]
-    on: Optional[List[Example]]
+    kun: list[Example] | None = Field(default=None)
+    on: list[Example] | None = Field(default=None)
 
 
 class KanjiConfig(BaseModel):
     kanji: str
     strokes: int
-    main_meanings: List[str]
+    main_meanings: list[str]
     main_readings: MainReadings
     meta: KanjiMeta
     radical: KanjiRadical
     # relation to words
     # on and kun are verifiable properties of the graph
-    reading_examples: Optional[ReadingExamples]
+    reading_examples: ReadingExamples | None = Field(default=None)

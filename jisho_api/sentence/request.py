@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
-import urllib
+from typing import Any, Iterator
+import urllib.parse
 from pathlib import Path
-from typing import List
 
 import requests
 from bs4 import BeautifulSoup
@@ -19,19 +21,19 @@ class RequestMeta(BaseModel):
 
 class SentenceRequest(BaseModel):
     meta: RequestMeta
-    data: List[SentenceConfig]
+    data: list[SentenceConfig]
 
     def __len__(self):
         return len(self.data)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[SentenceConfig]:
         yield from reversed(self.data)
 
     def rich_print(self):
         for d in self:
-            console.print(f"[white][[red]jp[white]]")
+            console.print("[white][[red]jp[white]]")
             console.print(CLITagger.bullet(d.japanese))
-            console.print(f"[white][[blue]en[white]]")
+            console.print("[white][[blue]en[white]]")
             console.print(CLITagger.bullet(d.en_translation))
             console.print(Markdown("---"))
 
@@ -41,7 +43,7 @@ class Sentence:
     ROOT = Path.home() / ".jisho/data/sentence/"
 
     @staticmethod
-    def sentences(soup):
+    def sentences(soup: BeautifulSoup) -> list[SentenceConfig]:
         res = soup.find_all("div", {"class": "sentence_content"})
 
         sts = []
@@ -68,7 +70,11 @@ class Sentence:
         return sts
 
     @staticmethod
-    def request(word, cache=False, headers=None):
+    def request(
+        word: str,
+        cache: bool = False,
+        headers: dict[str, str] | None = None,
+    ) -> SentenceRequest | None:
         url = Sentence.URL + urllib.parse.quote(word + " #sentences")
         toggle = False
 
@@ -82,12 +88,8 @@ class Sentence:
             soup = BeautifulSoup(r, "html.parser")
 
             r = SentenceRequest(
-                **{
-                    "meta": {
-                        "status": 200,
-                    },
-                    "data": Sentence.sentences(soup),
-                }
+                meta=RequestMeta(status=200),
+                data=Sentence.sentences(soup),
             )
             if not len(r):
                 console.print(f"[red bold][Error] [white] No matches found for {word}.")
@@ -97,7 +99,12 @@ class Sentence:
         return r
 
     @staticmethod
-    def save(word, r):
+    def save(word: str, r: SentenceRequest | dict[str, Any]) -> None:
         Sentence.ROOT.mkdir(exist_ok=True)
-        with open(Sentence.ROOT / f"{word}.json", "w", encoding="utf-8") as fp:
-            json.dump(r.dict(), fp, indent=4, ensure_ascii=False)
+        try:
+            payload = r if isinstance(r, dict) else r.model_dump(exclude_unset=True, by_alias=True)
+            with open(Sentence.ROOT / f"{word}.json", "w", encoding="utf-8") as fp:
+                json.dump(payload, fp, indent=4, ensure_ascii=False)
+        except Exception as e:
+            console.print(f"[red bold][Error] [white] Failed to save {word}: {str(e)}")
+

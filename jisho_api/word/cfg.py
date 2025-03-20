@@ -1,6 +1,8 @@
-from typing import List, Optional
+from __future__ import annotations
 
-from pydantic import BaseModel, HttpUrl
+from typing import Iterator
+
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class Sense(BaseModel):
@@ -11,26 +13,26 @@ class Sense(BaseModel):
     class Source(BaseModel):
         language: str
 
-    english_definitions: List[str]
-    parts_of_speech: List[Optional[str]]
-    links: List[Link]
-    tags: List[str]
-    restrictions: List[str]
-    see_also: List[str]
-    antonyms: List[str]
-    source: List[Source]
-    info: List[str]
+    english_definitions: list[str]
+    parts_of_speech: list[str | None] = Field(default_factory=list)
+    links: list[Link] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    restrictions: list[str] = Field(default_factory=list)
+    see_also: list[str] = Field(default_factory=list)
+    antonyms: list[str] = Field(default_factory=list)
+    source: list[Source] = Field(default_factory=list)
+    info: list[str] = Field(default_factory=list)
 
 
 class Japanese(BaseModel):
     # Japanese Word - full fledged kanji
     # Is optional because there are words that are just kana
-    word: Optional[str]
+    word: str | None = Field(default=None)
     # Kana reading
-    reading: Optional[str]
+    reading: str | None = Field(default=None)
 
     @property
-    def name():
+    def name(self):
         if self.word:
             return self.word
         return self.reading
@@ -38,12 +40,12 @@ class Japanese(BaseModel):
 
 class WordConfig(BaseModel):
     slug: str
-    is_common: Optional[bool]
-    tags: List[str]
+    is_common: bool | None = Field(default=None)
+    tags: list[str] = Field(default_factory=list)
 
-    jlpt: List[str]
-    japanese: List[Japanese]
-    senses: List[Sense]
+    jlpt: list[str] = Field(default_factory=list)
+    japanese: list[Japanese] = Field(default_factory=list)
+    senses: list[Sense] = Field(default_factory=list)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Sense]:
         yield from self.senses
